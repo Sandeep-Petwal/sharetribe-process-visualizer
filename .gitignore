@@ -4,3 +4,19 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+node_modules
+
+# Ignore all files in the node_modules directory
+node_modules/*
+
+# Ignore all files in the dist directory
+dist/*
+
+# Ignore all files in the build directory
+build/*
+
+# Ignore all files in the .vscode directory
+.vscode/*
+
+# env
+.env

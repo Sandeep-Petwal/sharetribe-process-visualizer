@@ -1,201 +1,134 @@
 # Sharetribe Transaction Process Visualizer
 
-![Sharetribe Process Visualizer](https://img.shields.io/badge/React-18.x-blue?style=for-the-badge&logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=for-the-badge&logo=typescript) ![Vite](https://img.shields.io/badge/Vite-5.x-purple?style=for-the-badge&logo=vite) ![MIT License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+## Overview
 
-A powerful, interactive React.js application for parsing, visualizing, and creating Sharetribe transaction processes from EDN (Extensible Data Notation) format. Generate beautiful directed graphs of complex workflow structures with real-time editing capabilities.
+This is a full-stack React application that functions as a visualizer for Sharetribe transaction processes defined in EDN (Extensible Data Notation) format. The application allows users to parse EDN code and generate interactive directed graph visualizations of transaction flows.
 
-## 🚀 Live Demo
+## User Preferences
 
-Visit our live demo: [Sharetribe Process Visualizer](https://sharetribe-visualizer.replit.app)
+Preferred communication style: Simple, everyday language.
+Visual theme: Light theme for better visual appeal (reverted from dark theme)
+Graph styling: Actor-based color coding for transitions, smooth curved edges to prevent overlap
+File management: Local storage for EDN files with save/load/rename/delete functionality
+Features: Manual graph builder page for creating custom visualizations
+Open source: GitHub integration, comprehensive README, SEO optimization
 
-## ✨ Features
+## System Architecture
 
-### 🎯 Core Visualization
-- **EDN Parser**: Advanced parser supporting both v2 and v3 Sharetribe process formats
-- **Interactive Graphs**: Beautiful directed graphs with pan, zoom, and selection capabilities
-- **Color-coded Transitions**: Actor-based color coding (Customer: Orange, Provider: Pink, Operator: Green, System: Gray)
-- **Smart Layout**: Automatic tree-like vertical layout matching official Sharetribe visualizer design
-- **Smooth Animations**: Curved edges and smooth transitions to prevent visual overlap
+### Frontend Architecture
+- **Framework**: React 18 with TypeScript
+- **Build Tool**: Vite for fast development and optimized builds
+- **Routing**: Wouter for lightweight client-side routing
+- **State Management**: TanStack Query for server state management
+- **UI Framework**: Tailwind CSS with shadcn/ui components
+- **Graph Visualization**: ReactFlow for interactive flow diagrams
 
-### 🛠️ Advanced Features
-- **Local Storage**: Save, load, rename, and delete EDN files locally
-- **Full-screen Mode**: Toggle input panel for immersive visualization experience
-- **Details Panel**: Comprehensive state and transition information on click
-- **Export Functionality**: Download graphs as JSON for sharing and backup
-- **Manual Graph Builder**: Create custom process flows visually with drag-and-drop interface
+### Backend Architecture
+- **Framework**: Express.js with TypeScript
+- **Runtime**: Node.js with ESM modules
+- **Database**: PostgreSQL with Drizzle ORM
+- **Session Management**: Connect-pg-simple for PostgreSQL session storage
+- **Development**: Hot module replacement via Vite integration
 
-### 🎨 User Experience
-- **Light Theme**: Clean, professional design optimized for readability
-- **Responsive Design**: Works seamlessly on desktop and mobile devices
-- **SEO Optimized**: Comprehensive meta tags and structured data
-- **Accessibility**: ARIA labels and keyboard navigation support
+## Key Components
 
-## 🏃‍♂️ Quick Start
+### Core Libraries
+- **EDN Parser**: Custom parser for Sharetribe transaction process definitions
+- **Graph Generator**: Converts parsed EDN data into ReactFlow node/edge format
+- **UI Components**: Comprehensive shadcn/ui component library
+- **Form Handling**: React Hook Form with Zod validation
 
-### Prerequisites
-- Node.js 18.x or higher
-- npm or yarn package manager
+### Frontend Structure
+- `client/src/pages/home.tsx`: Main application page with EDN input, graph visualization, and file management
+- `client/src/pages/builder.tsx`: Manual graph builder page for creating custom visualizations
+- `client/src/lib/edn-parser.ts`: Custom EDN parsing logic for transaction processes
+- `client/src/lib/graph-generator.ts`: Converts EDN data to ReactFlow graph format
+- `client/src/components/ui/`: Reusable UI components from shadcn/ui
 
-### Installation
+### Backend Structure
+- `server/index.ts`: Main Express server with middleware setup
+- `server/routes.ts`: API route definitions
+- `server/storage.ts`: Database abstraction layer with in-memory fallback
+- `server/vite.ts`: Vite integration for development mode
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/yourusername/sharetribe-process-visualizer.git
-cd sharetribe-process-visualizer
-```
+## Data Flow
 
-2. **Install dependencies**
-```bash
-npm install
-```
+1. **User Input**: User enters EDN code in textarea component
+2. **Parsing**: EDN parser processes the input and extracts transaction process data
+3. **Graph Generation**: Parsed data is converted to ReactFlow nodes and edges
+4. **Visualization**: Interactive graph is rendered using ReactFlow
+5. **User Interaction**: Users can pan, zoom, and explore the transaction flow
 
-3. **Start development server**
-```bash
-npm run dev
-```
+### EDN Data Structure
+The application expects EDN files with the following structure:
+- `:process/id`: Unique identifier for the transaction process
+- `:process/states`: Set of all possible states in the process
+- `:process/transitions`: Array of transition definitions with from/to states, actors, and actions
 
-4. **Open in browser**
-Navigate to `http://localhost:5000`
+## External Dependencies
 
-## 📖 Usage Guide
+### Frontend Dependencies
+- **React Ecosystem**: React, ReactDOM, React Router (wouter)
+- **State Management**: TanStack Query for server state
+- **UI Libraries**: Radix UI primitives, Tailwind CSS, shadcn/ui
+- **Graph Visualization**: ReactFlow (loaded via CDN)
+- **Form Handling**: React Hook Form, Zod validation
 
-### Basic Visualization
-1. **Input EDN**: Paste your Sharetribe transaction process EDN code
-2. **Load Sample**: Click "Load Sample" to try with example data
-3. **Visualize**: Click "Visualize Process" to generate the graph
-4. **Interact**: Click nodes/edges for detailed information
+### Backend Dependencies
+- **Server Framework**: Express.js with TypeScript support
+- **Database**: Drizzle ORM with PostgreSQL driver (@neondatabase/serverless)
+- **Session Storage**: connect-pg-simple for PostgreSQL sessions
+- **Development Tools**: tsx for TypeScript execution, Vite for frontend integration
 
-### File Management
-- **Save**: Store your EDN files locally with custom names
-- **Load**: Access previously saved files from the Files dialog
-- **Rename**: Edit file names for better organization
-- **Delete**: Remove unwanted files from storage
+### Development Dependencies
+- **Build Tools**: Vite, esbuild for server bundling
+- **TypeScript**: Full TypeScript support across frontend and backend
+- **CSS Processing**: PostCSS with Tailwind CSS
 
-### Graph Builder
-1. **Access Builder**: Click "Graph Builder" in the header
-2. **Add States**: Create new states with different types (initial, intermediate, final)
-3. **Add Transitions**: Connect states with actor-based transitions
-4. **Edit Elements**: Click to select and modify existing elements
-5. **Export**: Save your custom graph as JSON
+## Deployment Strategy
 
-## 🔧 Technical Architecture
+### Development Mode
+- Frontend served via Vite dev server with HMR
+- Backend runs with tsx for TypeScript execution
+- Database can use in-memory storage for quick prototyping
 
-### Frontend Stack
-- **React 18**: Modern hooks-based architecture
-- **TypeScript**: Type-safe development
-- **Vite**: Lightning-fast build tool
-- **ReactFlow**: Interactive graph visualization
-- **Tailwind CSS**: Utility-first styling
-- **shadcn/ui**: Modern component library
+### Production Build
+- Frontend built with Vite to static assets
+- Backend bundled with esbuild for optimized Node.js execution
+- Requires PostgreSQL database with proper environment variables
 
-### Backend Stack
-- **Express.js**: Node.js web framework
-- **TypeScript**: Server-side type safety
-- **PostgreSQL**: Database with Drizzle ORM
-- **Session Management**: Secure user sessions
+### Environment Variables
+- `DATABASE_URL`: PostgreSQL connection string (required for production)
+- `NODE_ENV`: Environment setting (development/production)
 
-### Key Libraries
-- **EDN Parser**: Custom implementation for Sharetribe formats
-- **Graph Generator**: Converts EDN to ReactFlow format
-- **Wouter**: Lightweight routing
-- **React Hook Form**: Form management
-- **Zod**: Runtime type validation
+### Build Commands
+- `npm run dev`: Start development server
+- `npm run build`: Build both frontend and backend for production
+- `npm run start`: Start production server
+- `npm run db:push`: Push database schema changes
 
-## 🎯 Supported Formats
+The application is designed to be deployed on platforms like Replit, with specific optimizations for that environment including cartographer integration and runtime error overlays.
 
-### EDN v2 Format
-```clojure
-{:process/id :example-process
- :process/states #{:initial :pending :completed}
- :process/transitions
- [{:transition/id :initiate
-   :transition/from :initial
-   :transition/to :pending
-   :transition/actor :actor.role/customer}]}
-```
+## Recent Changes (January 2025)
 
-### EDN v3 Format
-```clojure
-{:format :v3
- :transitions
- [{:name :transition/initiate
-   :actor :actor.role/customer
-   :actions [{:name :action/create-booking}]
-   :to :state/pending}]}
-```
+### Major Features Added
+- **Light Theme**: Reverted from dark theme to light theme for better visual appeal
+- **Local Storage**: Complete file management system with save/load/rename/delete functionality
+- **Manual Graph Builder**: New `/builder` page for creating custom visualizations with drag-and-drop interface
+- **Enhanced Graph Styling**: Actor-based color coding and smooth curved edges to prevent overlap
+- **Connection Points Hidden**: Removed small dots above/below state boxes for cleaner appearance
+- **SEO Optimization**: Comprehensive meta tags, Open Graph, and Twitter Card support
 
-## 🌟 What is Sharetribe?
+### Technical Improvements
+- **Edge Type**: Changed from 'bezier' to 'smoothstep' for better compatibility
+- **File Management**: localStorage-based EDN file storage with full CRUD operations
+- **Info Modal**: Comprehensive explanation of Sharetribe and tool usage
+- **Export Functionality**: Working download feature for graph data
+- **README**: Complete documentation for open-source distribution
 
-Sharetribe is a marketplace platform that enables businesses to build custom online marketplaces. Transaction processes define the workflow and states that transactions go through in these marketplaces, including:
-
-- **Booking flows** for service marketplaces
-- **Payment processing** with multiple actors
-- **State management** for complex workflows
-- **Automated actions** and notifications
-
-## 🤝 Contributing
-
-We welcome contributions! This is an open-source project designed to help the Sharetribe community.
-
-### How to Contribute
-
-1. **Fork the repository**
-2. **Create a feature branch**
-```bash
-git checkout -b feature/amazing-feature
-```
-
-3. **Make your changes**
-4. **Add tests** if applicable
-5. **Commit your changes**
-```bash
-git commit -m 'Add amazing feature'
-```
-
-6. **Push to the branch**
-```bash
-git push origin feature/amazing-feature
-```
-
-7. **Open a Pull Request**
-
-### Development Guidelines
-- Follow existing code style and patterns
-- Add TypeScript types for new features
-- Update documentation for significant changes
-- Test thoroughly before submitting
-
-## 📋 Roadmap
-
-- [ ] **PDF Export**: Export graphs as PDF/PNG images
-- [ ] **Real-time Collaboration**: Multiple users editing simultaneously
-- [ ] **Process Validation**: Validate EDN processes against Sharetribe schema
-- [ ] **Templates**: Pre-built process templates for common use cases
-- [ ] **Integration**: Direct integration with Sharetribe API
-- [ ] **Advanced Analytics**: Process complexity analysis and optimization suggestions
-
-## 🐛 Bug Reports & Feature Requests
-
-Found a bug or have a feature request? Please create an issue on our [GitHub repository](https://github.com/yourusername/sharetribe-process-visualizer/issues).
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Sharetribe Team**: For creating an amazing marketplace platform
-- **React Flow Team**: For the excellent graph visualization library
-- **Open Source Community**: For inspiration and contributions
-
-## 📞 Support
-
-- **GitHub Issues**: [Report bugs or request features](https://github.com/yourusername/sharetribe-process-visualizer/issues)
-- **Discussions**: [Join community discussions](https://github.com/yourusername/sharetribe-process-visualizer/discussions)
-- **Email**: [support@sharetribe-visualizer.com](mailto:support@sharetribe-visualizer.com)
-
----
-
-**Keywords**: Sharetribe, EDN, transaction process, workflow visualization, marketplace, React, TypeScript, process builder, graph visualization, flow diagram, state machine, business process, marketplace development
-
-Made with ❤️ for the Sharetribe community | [GitHub](https://github.com/yourusername/sharetribe-process-visualizer) | [Live Demo](https://sharetribe-visualizer.replit.app)
+### UI/UX Enhancements
+- **Single Sample Button**: Removed v2 samples, focused on v3 format
+- **Full-screen Mode**: Toggle input panel for immersive visualization
+- **Details Panel**: Comprehensive state and transition information
+- **GitHub Integration**: Footer links and contribution guidelines
+- **Professional Styling**: Clean, modern interface with proper spacing

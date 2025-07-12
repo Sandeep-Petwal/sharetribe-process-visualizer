@@ -5,30 +5,32 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { 
-  Play, 
-  Info, 
-  AlertCircle, 
-  Download, 
-  Maximize2, 
-  Minimize2, 
-  PanelRightClose, 
-  Save, 
-  FolderOpen, 
-  Trash2, 
-  Edit, 
+import {
+  Play,
+  Info,
+  AlertCircle,
+  Download,
+  Maximize2,
+  Minimize2,
+  PanelRightClose,
+  Save,
+  FolderOpen,
+  Trash2,
+  Edit,
   Plus,
   Settings,
   FileText,
   Github,
-  ExternalLink
+  ExternalLink,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { parseEdn, TransactionProcess } from '@/lib/edn-parser';
 import { generateGraphData, GraphData } from '@/lib/graph-generator';
-import { 
-  ReactFlow, 
-  Controls, 
-  Background, 
+import {
+  ReactFlow,
+  Controls,
+  Background,
   ReactFlowProvider,
   type Node,
   type Edge,
@@ -40,62 +42,8 @@ import '@xyflow/react/dist/style.css';
 import { Link } from 'wouter';
 
 // Default v3 EDN sample (official Sharetribe format)
-const DEFAULT_V3_EDN = `{:format :v3,
- :transitions
- [{:name :transition/inquire,
-   :actor :actor.role/customer,
-   :actions [{:name :action/update-protected-data}],
-   :to :state/inquiry}
-  {:name :transition/request-payment,
-   :actor :actor.role/customer,
-   :actions
-   [{:name :action/update-protected-data}
-    {:name :action/create-pending-booking, :config {:type :time}}
-    {:name :action/privileged-set-line-items}
-    {:name :action/stripe-create-payment-intent}],
-   :to :state/pending-payment,
-   :privileged? true}
-  {:name :transition/request-payment-after-inquiry,
-   :actor :actor.role/customer,
-   :actions
-   [{:name :action/update-protected-data}
-    {:name :action/create-pending-booking, :config {:type :time}}
-    {:name :action/privileged-set-line-items}
-    {:name :action/stripe-create-payment-intent}],
-   :from :state/inquiry,
-   :to :state/pending-payment,
-   :privileged? true}
-  {:name :transition/expire-payment,
-   :at
-   {:fn/plus
-    [{:fn/timepoint [:time/first-entered-state :state/pending-payment]}
-     {:fn/period ["PT15M"]}]},
-   :actions
-   [{:name :action/calculate-full-refund}
-    {:name :action/stripe-refund-payment}
-    {:name :action/decline-booking}],
-   :from :state/pending-payment,
-   :to :state/payment-expired}
-  {:name :transition/confirm-payment,
-   :actor :actor.role/customer,
-   :actions [{:name :action/stripe-confirm-payment-intent}],
-   :from :state/pending-payment,
-   :to :state/preauthorized}
-  {:name :transition/accept,
-   :actor :actor.role/provider,
-   :actions
-   [{:name :action/accept-booking}
-    {:name :action/stripe-capture-payment-intent}],
-   :from :state/preauthorized,
-   :to :state/accepted}
-  {:name :transition/decline,
-   :actor :actor.role/provider,
-   :actions
-   [{:name :action/calculate-full-refund}
-    {:name :action/stripe-refund-payment}
-    {:name :action/decline-booking}],
-   :from :state/preauthorized,
-   :to :state/declined}]}`;
+import DEFAULT_V3_EDN from '../../../attached_assets/DEFAULT_V3_EDN.js';
+import HomeInfoDialog from '@/components/home-info-dialod.jsx';
 
 interface StoredFile {
   id: string;
@@ -110,6 +58,15 @@ interface SelectedElement {
   data: any;
 }
 
+const DefaultNode = ({ data }) => {
+  return (
+    <div style={{ padding: 10, border: '2px solid #D1D5DB', background: 'white', borderRadius: 8 }}>
+      <strong>{'lol '}</strong>
+    </div>
+  );
+};
+
+
 export default function Home() {
   const [ednInput, setEdnInput] = useState('');
   const [graphData, setGraphData] = useState<GraphData | null>(null);
@@ -123,6 +80,11 @@ export default function Home() {
   const [newFileName, setNewFileName] = useState('');
   const [showFilesDialog, setShowFilesDialog] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+
+  console.log("graphData?.edges[0] : ", JSON.stringify(graphData?.edges[0]))
+  console.log("graphData?.nodes[0] : ", JSON.stringify(graphData?.nodes[0]))
+  // console.log(graphData.nodes.m  ap(n => ({ id: n.id, draggable: n.draggable })));
+
 
   // Load stored files on component mount
   useEffect(() => {
@@ -142,12 +104,37 @@ export default function Home() {
     localStorage.setItem('sharetribe-edn-files', JSON.stringify(storedFiles));
   }, [storedFiles]);
 
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+
+  const onNodeDrag = useCallback((event, node) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === node.id ? { ...n, position: node.position } : n
+      )
+    );
+  }, []);
+
+  const onNodeDragStop = useCallback((event, node) => {
+    console.log('Drag stopped:', node);
+  }, []);
+
+
+
   const handleVisualize = useCallback(() => {
+
+
+
     try {
       console.log('Starting visualization...', ednInput.substring(0, 100));
       const parsedData: TransactionProcess = parseEdn(ednInput);
       console.log('Parsed data:', parsedData);
       const newGraphData = generateGraphData(parsedData);
+      setGraphData(newGraphData); // you can keep this for metadata
+      setNodes(newGraphData.nodes); // ✅ controlled nodes
+      setEdges(newGraphData.edges); // ✅ controlled edges
+
+
       console.log('Generated graph data:', newGraphData);
       setGraphData(newGraphData);
       setError('');
@@ -185,13 +172,13 @@ export default function Home() {
 
   const downloadImage = useCallback(() => {
     if (!graphData) return;
-    
+
     // Create a simple export by converting the graph data to JSON
     const dataStr = JSON.stringify(graphData, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-    
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
     const exportFileDefaultName = 'sharetribe-graph.json';
-    
+
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
     linkElement.setAttribute('download', exportFileDefaultName);
@@ -207,7 +194,7 @@ export default function Home() {
 
   const saveFile = useCallback(() => {
     if (!ednInput.trim()) return;
-    
+
     const fileName = `Process-${Date.now()}`;
     const newFile: StoredFile = {
       id: Date.now().toString(),
@@ -216,7 +203,7 @@ export default function Home() {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    
+
     setStoredFiles(prev => [...prev, newFile]);
     setSelectedFileId(newFile.id);
   }, [ednInput]);
@@ -246,10 +233,10 @@ export default function Home() {
 
   const saveFileName = useCallback((fileId: string) => {
     if (!newFileName.trim()) return;
-    
-    setStoredFiles(prev => 
-      prev.map(f => 
-        f.id === fileId 
+
+    setStoredFiles(prev =>
+      prev.map(f =>
+        f.id === fileId
           ? { ...f, name: newFileName.trim(), updatedAt: new Date().toISOString() }
           : f
       )
@@ -258,13 +245,6 @@ export default function Home() {
     setNewFileName('');
   }, [newFileName]);
 
-  const clearAll = useCallback(() => {
-    setEdnInput('');
-    setGraphData(null);
-    setError('');
-    setSelectedElement(null);
-    setSelectedFileId('');
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -273,67 +253,26 @@ export default function Home() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Sharetribe Process Visualizer</h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Parse and visualize Sharetribe transaction processes from EDN format
-              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsFullscreen(!isFullscreen)}
+              >
+                {isFullscreen ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
+              </Button>
             </div>
+            <h1 className="text-2xl font-bold text-gray-900">Process Visualizer</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Info className="h-4 w-4 mr-2" />
-                  Info
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>About Sharetribe Process Visualizer</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <p className="text-gray-700">
-                    This tool helps you visualize Sharetribe transaction processes defined in EDN (Extensible Data Notation) format. 
-                    It supports both v2 and v3 Sharetribe process formats and generates interactive directed graphs.
-                  </p>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">Key Features:</h3>
-                    <ul className="list-disc list-inside text-gray-700 space-y-1">
-                      <li>Parse EDN transaction process definitions</li>
-                      <li>Generate interactive flow diagrams</li>
-                      <li>Color-coded transitions by actor type</li>
-                      <li>Local storage for your EDN files</li>
-                      <li>Manual graph builder for custom processes</li>
-                      <li>Export functionality for sharing</li>
-                    </ul>
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold">What is Sharetribe?</h3>
-                    <p className="text-gray-700">
-                      Sharetribe is a marketplace platform that allows businesses to build custom marketplaces. 
-                      Transaction processes define the workflow and states that transactions go through in these marketplaces.
-                    </p>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-            
             <Link href="/builder">
               <Button variant="outline" size="sm">
                 <Settings className="h-4 w-4 mr-2" />
                 Graph Builder
               </Button>
             </Link>
-            
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsFullscreen(!isFullscreen)}
-            >
-              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-              {isFullscreen ? 'Show Input' : 'Hide Input'}
-            </Button>
-            
+            <HomeInfoDialog showInfoModal={showInfoModal} setShowInfoModal={setShowInfoModal} />
+
+
             {graphData && (
               <Button
                 variant="outline"
@@ -451,17 +390,9 @@ export default function Home() {
                   <Save className="h-3 w-3 mr-1" />
                   Save
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={clearAll}
-                  className="text-xs"
-                >
-                  Clear
-                </Button>
               </div>
             </div>
-            
+
             <div className="flex-1 p-4">
               <Textarea
                 value={ednInput}
@@ -470,7 +401,7 @@ export default function Home() {
                 className="h-full resize-none font-mono text-sm"
               />
             </div>
-            
+
             <div className="p-4 border-t border-gray-200">
               <Button
                 onClick={handleVisualize}
@@ -487,7 +418,7 @@ export default function Home() {
         {/* Main Content */}
         <div className="flex-1 flex">
           {/* Graph Area */}
-          <div className={`flex-1 ${showDetails ? 'pr-80' : ''}`}>
+          <div className={`flex-1`}>
             {error && (
               <div className="p-4">
                 <Alert className="border-red-200 bg-red-50">
@@ -499,34 +430,29 @@ export default function Home() {
               </div>
             )}
 
-            {graphData && (
-              <div className="h-full bg-gray-50">
-                <ReactFlowProvider>
-                  <ReactFlow
-                    nodes={graphData.nodes}
-                    edges={graphData.edges}
-                    onNodeClick={onNodeClick}
-                    onEdgeClick={onEdgeClick}
-                    fitView
-                    className="bg-gray-50"
-                    nodeTypes={{}}
-                    edgeTypes={{}}
-                    connectionLineType="straight"
-                    defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-                    nodesDraggable={true}
-                    nodesConnectable={false}
-                    elementsSelectable={true}
-                  >
-                    <Controls className="bg-white border-gray-200" />
-                    <Background 
-                      color="#E5E7EB" 
-                      gap={20} 
-                      size={1}
-                    />
-                  </ReactFlow>
-                </ReactFlowProvider>
-              </div>
-            )}
+{graphData && (
+  <div className="h-full bg-gray-50">
+    <ReactFlowProvider>
+      <ReactFlow
+        nodes={nodes} // ✅ controlled
+        edges={edges} // ✅ controlled
+        onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
+        onNodeDrag={onNodeDrag} // ✅
+        onNodeDragStop={onNodeDragStop} // ✅
+        fitView
+        className="bg-gray-50"
+        nodesDraggable={true}
+        nodesConnectable={false}
+        elementsSelectable={true}
+      >
+        <Controls className="bg-white border-gray-200" />
+        <Background color="#E5E7EB" gap={20} size={1} />
+      </ReactFlow>
+    </ReactFlowProvider>
+  </div>
+)}
+
 
             {!graphData && !error && (
               <div className="h-full flex items-center justify-center">
@@ -625,31 +551,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="bg-white border-t border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <p className="text-sm text-gray-600">
-              Made with ❤️ for the Sharetribe community
-            </p>
-            <a 
-              href="https://github.com/yourusername/sharetribe-process-visualizer" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-            >
-              <Github className="h-4 w-4" />
-              Contribute on GitHub
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-gray-500">
-              Open Source • Free to Use • Community Driven
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

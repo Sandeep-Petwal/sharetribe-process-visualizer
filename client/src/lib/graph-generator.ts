@@ -66,6 +66,7 @@ function generateV3GraphData(processData: TransactionProcess): GraphData {
     return {
       id: state,
       type: 'default',
+      draggable: true,
       position: { x, y },
       data: { 
         label: formatStateLabel(state),
@@ -112,25 +113,18 @@ function generateV3GraphData(processData: TransactionProcess): GraphData {
           fill: '#374151',
           textDecoration: 'underline',
         },
-        labelBgStyle: {
-          fill: 'white',
-          fillOpacity: 0.95,
-          rx: 4,
-          ry: 4,
-          stroke: '#D1D5DB',
-          strokeWidth: 1,
-        },
-        labelBgPadding: [4, 8],
+
+        // labelBgPadding: [4, 8],
         type: 'straight',
         animated: false,
-        markerEnd: {
-          type: 'arrowclosed',
-          width: 8,
-          height: 8,
-          color: getActorColor(transition.actor || 'system'),
-        },
+        // markerEnd: {
+        //   type: 'arrowclosed',
+        //   width: 8,
+        //   height: 8,
+        //   color: getActorColor(transition.actor || 'system'),
+        // },
         // Position label closer to source
-        labelPosition: 0.25,
+        labelPosition: 0.75,
         data: {
           transitionId: transition.name,
           actor: transition.actor || 'system',
@@ -159,7 +153,6 @@ function generateV2GraphData(processData: TransactionProcess): GraphData {
 
     return {
       id: state,
-      type: 'default',
       position: { x, y },
       data: { 
         label: formatStateLabel(state),
