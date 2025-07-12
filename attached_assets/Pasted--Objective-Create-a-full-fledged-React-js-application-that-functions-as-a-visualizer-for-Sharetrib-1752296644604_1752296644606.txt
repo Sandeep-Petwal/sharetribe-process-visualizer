@@ -1,0 +1,216 @@
+
+Objective: Create a full-fledged React.js application that functions as a visualizer for Sharetribe transaction processes defined in EDN (Extensible Data Notation) format. The application should allow users to paste EDN code, visualize the transaction states and transitions as a directed graph, and provide a clean, interactive user interface.
+
+Part 1: Understanding EDN (Extensible Data Notation)
+Before diving into the visualizer, it's crucial to understand EDN, as it's the data format used by Sharetribe to define its transaction processes.
+
+What is EDN?
+EDN stands for Extensible Data Notation. It's a data format similar to JSON or XML, but it's based on Clojure's data structures. It's designed to be human-readable and machine-writable, emphasizing simplicity and extensibility.
+
+Why Sharetribe Uses EDN:
+Sharetribe leverages EDN to define complex, structured data like its transaction processes. Its expressiveness allows for representing various data types and nested structures, making it suitable for defining the intricate logic of marketplace workflows (states, transitions, actions, notifications).
+
+Key EDN Data Types Relevant to Sharetribe Transaction Processes:
+
+Maps (Dictionaries/Objects): Key-value pairs, enclosed in curly braces {}. Keys are often keywords. Example: {:key "value"}
+
+Vectors (Ordered Lists/Arrays): Ordered collections of values, enclosed in square brackets []. Example: [:a :b :c]
+
+Sets (Unordered Unique Collections): Unordered collections of unique values, enclosed in #{} . Example: #{:state1 :state2} (used for transition/from when a transition can originate from multiple states).
+
+Keywords: Symbolic identifiers, starting with a colon :. They are often used as keys in maps and as identifiers for states, transitions, actions, and notifications. Example: :process/id, :initial, :transition/initiate-booking.
+
+Symbols: Similar to keywords but do not start with a colon. Less common in simple data, but can represent code references.
+
+Strings: Text enclosed in double quotes "". Example: "My Transaction Process".
+
+Numbers: Integers or floating-point numbers.
+
+Booleans: true or false.
+
+Comments: Start with a semicolon ; and extend to the end of the line.
+
+Sample EDN File for a Simplified Transaction Process:
+
+This sample defines a basic "Instant Booking" process. The visualizer should be able to parse and render this structure.
+
+Code snippet
+
+;; Sample Sharetribe Transaction Process EDN
+;; This defines a simplified "Instant Booking" process.
+
+{:process/id :instant-booking
+ :process/states #{:initial :pending-payment :booked :completed :canceled}
+
+ :process/transitions [
+   ;; Initial state to pending payment (customer initiates booking)
+   {:transition/id :transition/initiate-booking
+    :transition/from :initial
+    :transition/to :pending-payment
+    :transition/actor :customer
+    :transition/actions [:action/create-booking :action/send-payment-request]
+    :transition/notifications [:notification/customer-booking-initiated :notification/provider-new-booking]}
+
+   ;; Pending payment to booked (system confirms payment)
+   {:transition/id :transition/confirm-payment
+    :transition/from :pending-payment
+    :transition/to :booked
+    :transition/actor :system
+    :transition/actions [:action/charge-customer :action/payout-provider]
+    :transition/notifications [:notification/customer-booking-confirmed :notification/provider-booking-confirmed]}
+
+   ;; Booked to completed (system marks as complete after service end)
+   {:transition/id :transition/mark-completed
+    :transition/from :booked
+    :transition/to :completed
+    :transition/actor :system
+    :transition/actions [:action/close-transaction]
+    :transition/notifications [:notification/customer-review-request :notification/provider-review-request]}
+
+   ;; Any state to canceled (customer or provider can cancel)
+   {:transition/id :transition/cancel-booking-customer
+    :transition/from #{:initial :pending-payment :booked}
+    :transition/to :canceled
+    :transition/actor :customer
+    :transition/actions [:action/refund-customer]
+    :transition/notifications [:notification/booking-canceled]}
+
+   {:transition/id :transition/cancel-booking-provider
+    :transition/from #{:initial :pending-payment :booked}
+    :transition/to :canceled
+    :transition/actor :provider
+    :transition/actions [:action/refund-customer]
+    :transition/notifications [:notification/booking-canceled]}
+ ]}
+Part 2: Sharetribe Transaction Process Structure in EDN
+The EDN defines a transaction process with the following key elements:
+
+:process/id: A keyword representing the unique identifier for the transaction process.
+
+:process/states: A set (#{} ) of keywords, where each keyword represents a distinct state in the transaction lifecycle (e.g., :initial, :booked, :canceled).
+
+:process/transitions: A vector ([]) of maps. Each map describes a single transition:
+
+:transition/id: A keyword uniquely identifying the transition.
+
+:transition/from: The source state(s) for this transition. This can be a single keyword (e.g., :initial) or a set of keywords (e.g., #{:initial :pending-payment :booked}) if the transition can originate from multiple states.
+
+:transition/to: The target state after the transition occurs (a single keyword).
+
+:transition/actor: The entity responsible for triggering the transition (e.g., :customer, :provider, :system, :operator).
+
+:transition/actions: An optional vector of keywords, representing actions performed during the transition (e.g., :action/create-booking, :action/charge-customer).
+
+:transition/notifications: An optional vector of keywords, representing notifications sent during the transition (e.g., :notification/customer-booking-initiated).
+
+Part 3: React.js Transaction Process Visualizer Requirements
+The AI code editor should generate a complete, self-contained React.js application that fulfills the following requirements:
+
+1. Core Functionality:
+
+EDN Input Area: Provide a large, multi-line textarea where users can paste their EDN transaction process code. It should have a clear label, e.g., "Paste EDN Transaction Process Here".
+
+Visualize Button: A prominent button (e.g., "Visualize Process") that, when clicked, triggers the parsing of the EDN input and renders the graph.
+
+Visual Output Area: A dedicated section (e.g., a div or a ReactFlow component container) where the generated graph is displayed.
+
+2. Visual Representation (Graph):
+
+Graph Library: Utilize react-flow (or a similar robust React-compatible graph visualization library) for rendering the directed graph. Ensure all necessary react-flow components (ReactFlowProvider, ReactFlow, Controls, Background) are correctly implemented.
+
+Nodes (States):
+
+Each unique state defined in :process/states should be represented as a distinct node in the graph.
+
+Nodes should be clearly labeled with their state names (e.g., "initial", "pending-payment").
+
+Use a clean, distinct visual style for nodes (e.g., rounded rectangles, a pleasant background color).
+
+Edges (Transitions):
+
+For each transition in :process/transitions, draw a directed arrow (edge) from the :transition/from state(s) to the :transition/to state.
+
+Handling Multiple from States: If :transition/from is a set of states (e.g., #{:initial :pending-payment}), draw a separate arrow from each state in the set to the :transition/to state. All these arrows originating from different "from" states but leading to the same "to" state for a single transition/id should share the same label details.
+
+Edge Labels: Each edge should have a label displaying:
+
+The transition/id (e.g., "initiate-booking").
+
+The transition/actor (e.g., "by customer").
+
+Optionally, a small indicator or tooltip on hover for actions and notifications associated with that transition.
+
+Use a clear arrow style to indicate direction.
+
+Layout:
+
+Implement an automatic graph layout algorithm (e.g., a hierarchical layout using dagre or similar, or react-flow's built-in layout options) to ensure nodes and edges are arranged neatly without overlapping, promoting readability.
+
+The graph should be centered within its container.
+
+Interactivity:
+
+Zoom and Pan: Enable standard zoom (mouse wheel) and pan (drag background) functionality for navigating the graph.
+
+Node/Edge Selection (Optional but good): Allow users to click on a node or an edge. When selected, display its detailed properties (e.g., state name for a node, or transition ID, from/to states, actor, actions, notifications for an edge) in a separate, small info panel or modal.
+
+3. Technology Stack and Libraries:
+
+React.js: Use functional components and hooks.
+
+Styling: Exclusively use Tailwind CSS for all styling. Load Tailwind via CDN: <script src="https://cdn.tailwindcss.com"></script>.
+
+Icons: Use lucide-react for any necessary icons (e.g., a "Visualize" icon, info icons).
+
+EDN Parsing: The application will need a JavaScript library to parse EDN strings into JavaScript objects. The AI should integrate a suitable library like edn-js (if available via CDN or simple import) or implement a basic parser if a robust library is not easily accessible within the sandbox environment. Assume edn-js is available for parsing: import { parseEdn } from 'edn-js'; (or similar CDN import).
+
+Graph Visualization: react-flow is the preferred library.
+
+4. Error Handling:
+
+Invalid EDN: If the pasted EDN is syntactically incorrect, display a clear, user-friendly error message (e.g., "Invalid EDN format. Please check your input.") instead of crashing.
+
+Malformed Process Data: If the EDN is valid but doesn't conform to the expected Sharetribe transaction process structure (e.g., missing :process/states or :process/transitions), display an informative message (e.g., "Malformed transaction process data. Missing required keys or incorrect structure.").
+
+5. Styling and Responsiveness:
+
+Modern UI: Design a clean, modern, and intuitive user interface.
+
+Responsiveness: Ensure the entire application, including the input area and the graph visualization, is fully responsive and looks good on all devices (mobile, tablet, desktop) and orientations. Use Tailwind's responsive utility classes (sm:, md:, lg:) extensively.
+
+Layout: Center the main content on the screen with appropriate padding and margins.
+
+No CLS: Ensure there are no Cumulative Layout Shifts.
+
+Font: Use the "Inter" font.
+
+Rounded Corners: Apply rounded corners to all elements.
+
+6. Code Structure and Best Practices:
+
+Single Immersive: Provide all React components and code within a single <immersive type="code" language="react"> block.
+
+Main Component: The main component should be named App and exported as default.
+
+Comments: Include extensive comments throughout the code, explaining logic, component structure, state management, and the graph generation process.
+
+No alert() or confirm(): Use custom UI elements (e.g., modal dialogs, inline messages) for any user feedback or confirmations.
+
+
+Example Flow:
+
+User opens the app.
+
+User sees a textarea and a "Visualize Process" button.
+
+User pastes the sample EDN (or their own EDN) into the textarea.
+
+User clicks "Visualize Process".
+
+The EDN is parsed.
+
+The graph is generated and displayed in the visual output area, showing states as nodes and transitions as labeled arrows.
+
+User can zoom, pan, and optionally click on elements for more details.
+
+Note : when i say ReactFlow it is not necessory to use it you can use any other library 
