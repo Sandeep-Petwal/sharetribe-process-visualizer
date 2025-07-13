@@ -56,7 +56,7 @@ export function parseEdn(ednString: string): TransactionProcess {
     } else if (isV2Format) {
       return parseV2Format(cleanEdn);
     } else {
-      throw new Error('Unrecognized EDN format. Please provide a valid Sharetribe transaction process.');
+      throw new Error('Unrecognized EDN format. Please provide a valid transaction process.');
     }
   } catch (error) {
     if (error instanceof Error) {

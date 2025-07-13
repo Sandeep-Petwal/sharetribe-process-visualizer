@@ -13,7 +13,7 @@ const DEFAULT_V3_EDN = `{:format :v3,
     {:name :action/stripe-create-payment-intent}],
    :to :state/pending-payment,
    :privileged? true}
-  {:name :transition/request-payment-after-inquiry,
+  {:name :transition/request-payment,
    :actor :actor.role/customer,
    :actions
    [{:name :action/update-protected-data}

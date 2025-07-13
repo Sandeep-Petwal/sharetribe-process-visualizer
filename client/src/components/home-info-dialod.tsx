@@ -18,15 +18,15 @@ const HomeInfoDialog: React.FC<HomeInfoDialogProps> = ({showInfoModal, setShowIn
         </DialogTrigger>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>About Sharetribe Process Visualizer</DialogTitle>
+            <DialogTitle>About Process Visualizer</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-gray-700">
               This tool helps you visualize Sharetribe transaction processes defined in EDN (Extensible Data Notation) format. 
-              It supports both v2 and v3 Sharetribe process formats and generates interactive directed graphs.
+              It supports Sharetribe process formats and generates interactive directed graphs.
             </p>
             <div className="space-y-2">
-              <h3 className="font-semibold">Key Features:</h3>
+              {/* <h3 className="font-semibold">Key Features:</h3>
               <ul className="list-disc list-inside text-gray-700 space-y-1">
                 <li>Parse EDN transaction process definitions</li>
                 <li>Generate interactive flow diagrams</li>
@@ -34,14 +34,7 @@ const HomeInfoDialog: React.FC<HomeInfoDialogProps> = ({showInfoModal, setShowIn
                 <li>Local storage for your EDN files</li>
                 <li>Manual graph builder for custom processes</li>
                 <li>Export functionality for sharing</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h3 className="font-semibold">What is Sharetribe?</h3>
-              <p className="text-gray-700">
-                Sharetribe is a marketplace platform that allows businesses to build custom marketplaces. 
-                Transaction processes define the workflow and states that transactions go through in these marketplaces.
-              </p>
+              </ul> */}
             </div>
           </div>
         </DialogContent>

@@ -5,6 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { toPng, toSvg } from 'html-to-image';
+
 import {
   Play,
   Info,
@@ -23,7 +25,8 @@ import {
   Github,
   ExternalLink,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  X
 } from 'lucide-react';
 import { parseEdn, TransactionProcess } from '@/lib/edn-parser';
 import { generateGraphData, GraphData } from '@/lib/graph-generator';
@@ -35,7 +38,6 @@ import {
   type Node,
   type Edge,
   getViewportForBounds,
-  getRectOfNodes,
   getConnectedEdges
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -44,6 +46,7 @@ import { Link } from 'wouter';
 // Default v3 EDN sample (official Sharetribe format)
 import DEFAULT_V3_EDN from '../../../attached_assets/DEFAULT_V3_EDN.js';
 import HomeInfoDialog from '@/components/home-info-dialod.jsx';
+import { Close } from '@radix-ui/react-toast';
 
 interface StoredFile {
   id: string;
@@ -66,6 +69,22 @@ const DefaultNode = ({ data }) => {
   );
 };
 
+const downloadGraphAsImage = () => {
+  const flowWrapper = document.querySelector('.react-flow'); // Or use a ref
+  if (!flowWrapper) return;
+
+  toSvg(flowWrapper).then((svgUrl) => {
+    const link = document.createElement('a');
+    link.download = 'graph.svg';
+    link.href = svgUrl;
+    link.click();
+  })
+    .catch((err) => {
+      console.error('Error exporting graph:', err);
+    });
+};
+
+
 
 export default function Home() {
   const [ednInput, setEdnInput] = useState('');
@@ -79,10 +98,15 @@ export default function Home() {
   const [isEditingFileName, setIsEditingFileName] = useState<string>('');
   const [newFileName, setNewFileName] = useState('');
   const [showFilesDialog, setShowFilesDialog] = useState(false);
-  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showSaveModal, setSaveModal] = useState(false)
+  const [fileName, setFileName] = useState('')
 
-  console.log("graphData?.edges[0] : ", JSON.stringify(graphData?.edges[0]))
-  console.log("graphData?.nodes[0] : ", JSON.stringify(graphData?.nodes[0]))
+
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  console.log("fileName")
+
+  // console.log("graphData?.edges[0] : ", JSON.stringify(graphData?.edges[0]))
+  // console.log("graphData?.nodes[0] : ", JSON.stringify(graphData?.nodes[0]))
   // console.log(graphData.nodes.m  ap(n => ({ id: n.id, draggable: n.draggable })));
 
 
@@ -195,10 +219,13 @@ export default function Home() {
   const saveFile = useCallback(() => {
     if (!ednInput.trim()) return;
 
-    const fileName = `Process-${Date.now()}`;
+    const name = fileName.trim() !== "" ? fileName : `Process-${Date.now()}`;
+
+    console.log("fileName >>> ", fileName)
+    console.log("name >>> ", name)
     const newFile: StoredFile = {
       id: Date.now().toString(),
-      name: fileName,
+      name: name,
       content: ednInput,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -206,6 +233,7 @@ export default function Home() {
 
     setStoredFiles(prev => [...prev, newFile]);
     setSelectedFileId(newFile.id);
+    setSaveModal(false)
   }, [ednInput]);
 
   const loadFile = useCallback((fileId: string) => {
@@ -250,7 +278,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between overflow-x-auto gap-2">
           <div className="flex items-center gap-4">
             <div>
               <Button
@@ -261,7 +289,7 @@ export default function Home() {
                 {isFullscreen ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
               </Button>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900">Process Visualizer</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Process Visualizer (Beta)</h1>
           </div>
           <div className="flex items-center gap-2">
             <Link href="/builder">
@@ -284,6 +312,12 @@ export default function Home() {
               </Button>
             )}
           </div>
+
+          <Button onClick={downloadGraphAsImage}>
+            <Download className="h-4 w-4 mr-2" />
+            Export Image
+          </Button>
+
         </div>
       </div>
 
@@ -305,6 +339,8 @@ export default function Home() {
                 >
                   Load Sample
                 </Button>
+
+
                 <Dialog open={showFilesDialog} onOpenChange={setShowFilesDialog}>
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="text-xs">
@@ -380,16 +416,44 @@ export default function Home() {
                     </div>
                   </DialogContent>
                 </Dialog>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={saveFile}
-                  disabled={!ednInput.trim()}
-                  className="text-xs"
-                >
-                  <Save className="h-3 w-3 mr-1" />
-                  Save
-                </Button>
+
+                <Dialog open={showSaveModal} onOpenChange={setSaveModal}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="text-xs">
+                      <FolderOpen className="h-3 w-3 mr-1" />
+                      Save
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Save the doc in localStorage</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 max-h-96 overflow-y-auto">
+                      <div className="space-y-1">
+                        <label htmlFor="fileName" className="text-sm font-medium">
+                          File Name
+                        </label>
+                        <input
+                          id="fileName"
+                          type="text"
+                          value={fileName}
+                          onChange={(e) => {
+                            setFileName(e.target.value)
+                          }}
+                          placeholder="Enter file name"
+                          className="w-full px-3 py-2 border border-input rounded-md text-sm shadow-sm focus:outline-none focus:ring-ring focus:border-transparent"
+                        />
+
+                        <Button
+                          disabled={!ednInput.trim()}
+                          onClick={saveFile}
+                          className="w-full">
+                          Save
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
 
@@ -430,28 +494,28 @@ export default function Home() {
               </div>
             )}
 
-{graphData && (
-  <div className="h-full bg-gray-50">
-    <ReactFlowProvider>
-      <ReactFlow
-        nodes={nodes} // ✅ controlled
-        edges={edges} // ✅ controlled
-        onNodeClick={onNodeClick}
-        onEdgeClick={onEdgeClick}
-        onNodeDrag={onNodeDrag} // ✅
-        onNodeDragStop={onNodeDragStop} // ✅
-        fitView
-        className="bg-gray-50"
-        nodesDraggable={true}
-        nodesConnectable={false}
-        elementsSelectable={true}
-      >
-        <Controls className="bg-white border-gray-200" />
-        <Background color="#E5E7EB" gap={20} size={1} />
-      </ReactFlow>
-    </ReactFlowProvider>
-  </div>
-)}
+            {graphData && (
+              <div className="h-full bg-gray-50">
+                <ReactFlowProvider>
+                  <ReactFlow
+                    nodes={nodes} // ✅ controlled
+                    edges={edges} // ✅ controlled
+                    onNodeClick={onNodeClick}
+                    onEdgeClick={onEdgeClick}
+                    onNodeDrag={onNodeDrag} // ✅
+                    onNodeDragStop={onNodeDragStop} // ✅
+                    fitView
+                    className="bg-gray-50"
+                    nodesDraggable={true}
+                    nodesConnectable={false}
+                    elementsSelectable={true}
+                  >
+                    <Controls className="bg-white border-gray-200" />
+                    <Background color="#E5E7EB" gap={20} size={1} />
+                  </ReactFlow>
+                </ReactFlowProvider>
+              </div>
+            )}
 
 
             {!graphData && !error && (
@@ -487,7 +551,7 @@ export default function Home() {
                     size="sm"
                     onClick={() => setShowDetails(false)}
                   >
-                    <PanelRightClose className="h-4 w-4" />
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -514,7 +578,7 @@ export default function Home() {
                     ) : (
                       <div className="space-y-2">
                         <div>
-                          <label className="text-sm font-medium text-gray-700">Transition ID</label>
+                          <label className="text-sm font-medium text-gray-700">Transition</label>
                           <p className="text-sm text-gray-900">{selectedElement.data.transitionId}</p>
                         </div>
                         <div>

@@ -57,3 +57,7 @@
     @apply font-sans antialiased bg-background text-foreground;
   }
 }
+
+.react-flow__panel a {
+  display: none;
+}
