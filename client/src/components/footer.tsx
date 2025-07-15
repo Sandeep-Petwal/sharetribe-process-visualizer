@@ -17,8 +17,17 @@ const Footer: React.FC = () => {
                         <ExternalLink className="h-3 w-3" />
                     </a>
                 </div>
+
+            <a href="#" target="_blank">
+                <img src="https://hitwebcounter.com/counter/counter.php?page=21165776&style=0024&nbdigits=5&type=page&initCount=0" title="Counter Widget" Alt="Visit counter For Websites" border="0" />
+            </a>
+
+            {/* <a href="https://www.freecounterstat.com" title="free counter">
+            <img src="https://counter1.optistats.ovh/private/freecounterstat.php?c=2yzbsppx2ub5az7zspla54h77bjrrxyg" border="0" title="free counter" alt="free counter"/>
+            </a> */}
             </div>
-        </div>);
+        </div>
+    );
 };
 
 export default Footer;

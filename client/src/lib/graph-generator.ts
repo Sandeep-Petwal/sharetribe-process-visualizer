@@ -1,5 +1,6 @@
 import { Node, Edge } from '@xyflow/react';
 import { TransactionProcess, TransitionDefinition, V3TransitionDefinition } from './edn-parser';
+import ReactFlow, { MarkerType } from 'reactflow';
 
 // Actor color mapping for transitions
 const ACTOR_COLORS = {
@@ -35,42 +36,145 @@ export function generateGraphData(processData: TransactionProcess): GraphData {
 /**
  * Generate graph data for v3 format
  */
+// function generateV3GraphData(processData: TransactionProcess): GraphData {
+//   const transitions = processData.transitions || [];
+  
+//   // Extract all unique states from transitions
+//   const stateSet = new Set<string>();
+  
+//   // Add initial state (no 'from' field means it's initial)
+//   const initialTransitions = transitions.filter(t => !t.from);
+//   if (initialTransitions.length > 0) {
+//     stateSet.add('initial');
+//   }
+  
+//   // Add all states from transitions
+//   transitions.forEach(transition => {
+//     if (transition.from) {
+//       stateSet.add(transition.from);
+//     }
+//     if (transition.to) {
+//       stateSet.add(transition.to);
+//     }
+//   });
+  
+//   const states = Array.from(stateSet);
+  
+//   // Create nodes with improved tree layout
+//   const nodes: Node[] = states.map((state, index) => {
+//     const { x, y } = getImprovedTreePosition(state, transitions, states);
+    
+//     return {
+//       id: state,
+//       type: 'default',
+//       draggable: true,
+//       position: { x, y },
+//       data: { 
+//         label: formatStateLabel(state),
+//         originalId: state
+//       },
+//       style: {
+//         background: 'white',
+//         color: '#374151',
+//         border: '2px solid #D1D5DB',
+//         borderRadius: '8px',
+//         padding: '12px 20px',
+//         fontSize: '14px',
+//         fontWeight: '500',
+//         minWidth: '120px',
+//         textAlign: 'center',
+//         fontStyle: state === 'initial' ? 'italic' : 'normal',
+//       },
+//       sourcePosition: 'bottom' as const,
+//       targetPosition: 'top' as const,
+//     };
+//   });
+
+//   // Create edges for each transition
+//   const edges: Edge[] = [];
+//   transitions.forEach((transition, transitionIndex) => {
+//     const fromState = transition.from || 'initial';
+//     const toState = transition.to;
+    
+//     if (toState) {
+//       const edgeId = `${transition.name}-${transitionIndex}`;
+      
+//       edges.push({
+//         id: edgeId,
+//         source: fromState,
+//         target: toState,
+//         animated : true,
+//         markerEnd: {
+//           type: MarkerType.ArrowClosed, // or MarkerType.Arrow
+//           width: 10,
+//           height: 20,
+//           color: '#FF0072',
+//         },
+//         label: formatV3TransitionLabel(transition),
+//         style: {
+//           stroke: getActorColor(transition.actor || 'system'),
+//           strokeWidth: 2,
+//         },
+//         labelStyle: {
+//           fontSize: '11px',
+//           fontWeight: '500',
+//           fill: '#374151',
+//           textDecoration: 'underline',
+//         },
+
+//         // labelBgPadding: [4, 8],
+//         type: 'straight',
+//         animated: false,
+//         // markerEnd: {
+//         //   type: 'arrowclosed',
+//         //   width: 8,
+//         //   height: 8,
+//         //   color: getActorColor(transition.actor || 'system'),
+//         // },
+//         // Position label closer to source
+//         labelPosition: 0.75,
+//         data: {
+//           transitionId: transition.name,
+//           actor: transition.actor || 'system',
+//           actions: transition.actions?.map(a => a.name) || [],
+//           notifications: [],
+//           from: fromState,
+//           to: toState,
+//         }
+//       });
+//     }
+//   });
+
+//   return { nodes, edges };
+// }
+
 function generateV3GraphData(processData: TransactionProcess): GraphData {
   const transitions = processData.transitions || [];
-  
-  // Extract all unique states from transitions
+
   const stateSet = new Set<string>();
-  
-  // Add initial state (no 'from' field means it's initial)
   const initialTransitions = transitions.filter(t => !t.from);
   if (initialTransitions.length > 0) {
     stateSet.add('initial');
   }
-  
-  // Add all states from transitions
+
   transitions.forEach(transition => {
-    if (transition.from) {
-      stateSet.add(transition.from);
-    }
-    if (transition.to) {
-      stateSet.add(transition.to);
-    }
+    if (transition.from) stateSet.add(transition.from);
+    if (transition.to) stateSet.add(transition.to);
   });
-  
+
   const states = Array.from(stateSet);
-  
-  // Create nodes with improved tree layout
-  const nodes: Node[] = states.map((state, index) => {
+
+  const nodes: Node[] = states.map((state) => {
     const { x, y } = getImprovedTreePosition(state, transitions, states);
-    
+
     return {
       id: state,
       type: 'default',
       draggable: true,
       position: { x, y },
-      data: { 
+      data: {
         label: formatStateLabel(state),
-        originalId: state
+        originalId: state,
       },
       style: {
         background: 'white',
@@ -84,61 +188,66 @@ function generateV3GraphData(processData: TransactionProcess): GraphData {
         textAlign: 'center',
         fontStyle: state === 'initial' ? 'italic' : 'normal',
       },
-      sourcePosition: 'bottom' as const,
-      targetPosition: 'top' as const,
+      // You could dynamically change this based on layout too
+      sourcePosition: 'bottom',
+      targetPosition: 'top',
     };
   });
 
-  // Create edges for each transition
   const edges: Edge[] = [];
-  transitions.forEach((transition, transitionIndex) => {
+
+  transitions.forEach((transition, index) => {
     const fromState = transition.from || 'initial';
     const toState = transition.to;
-    
-    if (toState) {
-      const edgeId = `${transition.name}-${transitionIndex}`;
-      
-      edges.push({
-        id: edgeId,
-        source: fromState,
-        target: toState,
-        label: formatV3TransitionLabel(transition),
-        style: {
-          stroke: getActorColor(transition.actor || 'system'),
-          strokeWidth: 2,
-        },
-        labelStyle: {
-          fontSize: '11px',
-          fontWeight: '500',
-          fill: '#374151',
-          textDecoration: 'underline',
-        },
+    if (!toState) return;
 
-        // labelBgPadding: [4, 8],
-        type: 'straight',
-        animated: false,
-        // markerEnd: {
-        //   type: 'arrowclosed',
-        //   width: 8,
-        //   height: 8,
-        //   color: getActorColor(transition.actor || 'system'),
-        // },
-        // Position label closer to source
-        labelPosition: 0.75,
-        data: {
-          transitionId: transition.name,
-          actor: transition.actor || 'system',
-          actions: transition.actions?.map(a => a.name) || [],
-          notifications: [],
-          from: fromState,
-          to: toState,
-        }
-      });
-    }
+    const edgeId = `${transition.name}-${index}`;
+
+    const actor = transition.actor || 'system';
+    const isSystem = actor === 'system';
+
+    const edgeColor = getActorColor(actor);
+
+    edges.push({
+      id: edgeId,
+      source: fromState,
+      target: toState,
+      label: formatV3TransitionLabel(transition),
+      animated: !isSystem, // animate for non-system actors
+      type: index % 3 === 0 ? 'bezier' : index % 3 === 1 ? 'step' : 'straight', // rotate types for visual variety
+      labelPosition: index % 2 === 0 ? 0.3 : 0.7, // alternate label positions to reduce clutter
+      markerEnd: isSystem
+        ? undefined // no arrow for system transitions
+        : {
+            type: MarkerType.ArrowClosed,
+            width: 10,
+            height: 20,
+            color: edgeColor,
+          },
+      style: {
+        stroke: edgeColor,
+        strokeWidth: 2,
+        strokeDasharray: isSystem ? '4 2' : undefined,
+      },
+      labelStyle: {
+        fontSize: '11px',
+        fontWeight: '500',
+        fill: '#374151',
+      },
+      data: {
+        transitionId: transition.name,
+        actor,
+        actions: transition.actions?.map((a) => a.name) || [],
+        notifications: [],
+        from: fromState,
+        to: toState,
+      },
+    });
   });
 
   return { nodes, edges };
 }
+
 
 /**
  * Generate graph data for v2 format

@@ -38,7 +38,8 @@ import {
   type Node,
   type Edge,
   getViewportForBounds,
-  getConnectedEdges
+  getConnectedEdges,
+  MiniMap
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Link } from 'wouter';
@@ -47,6 +48,7 @@ import { Link } from 'wouter';
 import DEFAULT_V3_EDN from '../../../attached_assets/DEFAULT_V3_EDN.js';
 import HomeInfoDialog from '@/components/home-info-dialod.jsx';
 import { Close } from '@radix-ui/react-toast';
+import { AnimatedSVGEdge } from '@/components/xyflow/AnimatedSVGEdge.jsx';
 
 interface StoredFile {
   id: string;
@@ -103,7 +105,7 @@ export default function Home() {
 
 
   const [showInfoModal, setShowInfoModal] = useState(false);
-  console.log("fileName")
+  // console.log("fileName")
 
   // console.log("graphData?.edges[0] : ", JSON.stringify(graphData?.edges[0]))
   // console.log("graphData?.nodes[0] : ", JSON.stringify(graphData?.nodes[0]))
@@ -150,16 +152,14 @@ export default function Home() {
 
 
     try {
-      console.log('Starting visualization...', ednInput.substring(0, 100));
+      // console.log('Starting visualization...', ednInput.substring(0, 100));
       const parsedData: TransactionProcess = parseEdn(ednInput);
-      console.log('Parsed data:', parsedData);
+      // console.log('Parsed data:', parsedData);
       const newGraphData = generateGraphData(parsedData);
       setGraphData(newGraphData); // you can keep this for metadata
       setNodes(newGraphData.nodes); // ✅ controlled nodes
       setEdges(newGraphData.edges); // ✅ controlled edges
 
-
-      console.log('Generated graph data:', newGraphData);
       setGraphData(newGraphData);
       setError('');
     } catch (err) {
@@ -272,6 +272,10 @@ export default function Home() {
     setIsEditingFileName('');
     setNewFileName('');
   }, [newFileName]);
+
+  const edgeTypes = {
+    animatedSvg: AnimatedSVGEdge,
+  };
 
 
   return (
@@ -509,6 +513,7 @@ export default function Home() {
                     nodesDraggable={true}
                     nodesConnectable={false}
                     elementsSelectable={true}
+                    edgeTypes={edgeTypes}
                   >
                     <Controls className="bg-white border-gray-200" />
                     <Background color="#E5E7EB" gap={20} size={1} />
