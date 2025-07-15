@@ -4,11 +4,9 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "start": "vite preview",
-    "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "dev": "vite --config client/vite.config.mjs",
+    "build": "vite build --config client/vite.config.mjs",
+    "preview": "vite preview --config client/vite.config.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
